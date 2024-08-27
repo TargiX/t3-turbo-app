@@ -76,6 +76,7 @@ export const AccountRelations = relations(Account, ({ one }) => ({
   user: one(User, { fields: [Account.userId], references: [User.id] }),
 }));
 
+// This is the original session for authentication
 export const Session = pgTable("session", {
   sessionToken: varchar("sessionToken", { length: 255 }).notNull().primaryKey(),
   userId: uuid("userId")
@@ -87,6 +88,42 @@ export const Session = pgTable("session", {
   }).notNull(),
 });
 
-export const SessionRelations = relations(Session, ({ one }) => ({
-  user: one(User, { fields: [Session.userId], references: [User.id] }),
+// This is the new meditation session
+export const MeditationSession = pgTable("meditation_session", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  category: varchar("category", { length: 100 }).notNull(),
+  description: text("description"),
+  audioFilePath: varchar("audio_file_path", { length: 255 }).notNull(),
+  duration: integer("duration").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const UserMeditationSession = pgTable("user_meditation_session", {
+  userId: uuid("user_id").notNull().references(() => User.id),
+  sessionId: uuid("session_id").notNull().references(() => MeditationSession.id),
+  progress: integer("progress").default(0),
+  rating: integer("rating"),
+  notes: text("notes"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.userId, table.sessionId] }),
+}));
+
+export const MeditationSessionRelations = relations(MeditationSession, ({ many }) => ({
+  userSessions: many(UserMeditationSession),
+}));
+
+export const UserMeditationSessionRelations = relations(UserMeditationSession, ({ one }) => ({
+  user: one(User, {
+    fields: [UserMeditationSession.userId],
+    references: [User.id],
+  }),
+  session: one(MeditationSession, {
+    fields: [UserMeditationSession.sessionId],
+    references: [MeditationSession.id],
+  }),
 }));

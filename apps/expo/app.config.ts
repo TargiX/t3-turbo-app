@@ -2,8 +2,8 @@ import type { ConfigContext, ExpoConfig } from "expo/config";
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: "expo",
-  slug: "expo",
+  name: "t3-turbo-app",
+  slug: "t3-turbo-app",
   scheme: "expo",
   version: "0.1.0",
   orientation: "portrait",
@@ -29,11 +29,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       backgroundColor: "#1F104A",
     },
   },
-  // extra: {
-  //   eas: {
-  //     projectId: "your-eas-project-id",
-  //   },
-  // },
+  extra: {
+    eas: {
+      projectId: "995daa72-827f-4494-bb80-c890c8111156",
+    },
+  },
   experiments: {
     tsconfigPaths: true,
     typedRoutes: true,

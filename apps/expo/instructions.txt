@@ -1,0 +1,65 @@
+We are developing a mobile app for meditation with react native and expo.
+
+Core Features:
+
+User registration and profile creation
+Library of meditation sessions
+
+
+ser Experience (UX) and Screen Flows
+Onboarding Flow:
+
+Welcome screen
+Sign up / Log in
+Personalization questionnaire (meditation experience, goals, voice preferences)
+Tutorial on core features
+
+Main Navigation:
+
+Home
+Discover
+Create
+Profile
+More (Settings, Help, etc.)
+
+Screen Details:
+
+Home Screen:
+
+Daily recommendation
+Continue session
+Quick access to timer
+Streak and stats summary
+
+
+Discover Screen:
+
+Categories (e.g., Sleep, Stress, Focus)
+Featured sessions
+New arrivals
+Search functionality
+
+
+Create Screen:
+
+Template selection
+Duration setting
+Voice customization (using ElevenLabs options)
+Background sound mixer
+Save and name creation
+
+
+Profile Screen:
+
+User stats and achievements
+Session history
+Mood journal entries
+Settings and preferences
+
+
+Session Playback Screen:
+
+Large play/pause button
+Progress bar
+Background animation (e.g., breathing guide)
+Post-session rating and notes

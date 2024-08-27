@@ -1,0 +1,21 @@
+{
+  "expo": {
+    // ... other configurations
+    "plugins": [
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone."
+        }
+      ]
+    ],
+    "android": {
+      "permissions": ["INTERNET", "MODIFY_AUDIO_SETTINGS"]
+    },
+    "ios": {
+      "infoPlist": {
+        "UIBackgroundModes": ["audio"]
+      }
+    }
+  }
+}
