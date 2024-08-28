@@ -9,10 +9,12 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
+import { createClient } from '@supabase/supabase-js';
 
 import type { Session } from "@acme/auth";
 import { auth, validateToken } from "@acme/auth";
 import { db } from "@acme/db/client";
+import { sign } from 'jsonwebtoken';
 
 /**
  * Isomorphic Session getter for API requests
@@ -47,10 +49,26 @@ export const createTRPCContext = async (opts: {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
   console.log(">>> tRPC Request from", source, "by", session?.user);
 
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+ 
+  // If there's a session, create a custom JWT for Supabase
+  if (session?.user) {
+    const payload = {
+      userId: session.user.id,
+      exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour from now
+    };
+    const supabaseToken = sign(payload, process.env.SUPABASE_JWT_SECRET!);
+    supabase.auth.setSession({ access_token: supabaseToken, refresh_token: '' });
+  }
+
   return {
     session,
     db,
     token: authToken,
+    supabase,
   };
 };
 

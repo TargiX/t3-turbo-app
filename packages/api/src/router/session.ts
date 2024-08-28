@@ -14,7 +14,7 @@ export const sessionRouter = createTRPCRouter({
     return ctx.db.select().from(MeditationSession);
   }),
 
-  getById: publicProcedure
+  getById: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       console.log("Fetching session with ID:", input.id);
@@ -27,21 +27,21 @@ export const sessionRouter = createTRPCRouter({
       if (session) {
         console.log("Generating signed URL for:", session.audioFilePath);
         // Generate a new signed URL for the audio file
-        const { data, error } = await supabase.storage
+        const { data, error } = await ctx.supabase.storage
           .from('meditation_sessions')
           .createSignedUrl(session.audioFilePath, 3600); // URL valid for 1 hour
 
-        // if (error) {
-        //   console.error("Error generating signed URL:", error);
-        //   throw new Error(`Failed to generate signed URL: ${error.message}`);
-        // }
+        if (error) {
+          console.error("Error generating signed URL:", error);
+          throw new Error(`Failed to generate signed URL: ${error.message}`);
+        }
 
-        // if (!data?.signedUrl) {
-        //   console.error("No signed URL generated");
-        //   throw new Error("Failed to generate signed URL");
-        // }
+        if (!data?.signedUrl) {
+          console.error("No signed URL generated");
+          throw new Error("Failed to generate signed URL");
+        }
 
-        // console.log("Signed URL generated successfully:", data.signedUrl);
+        console.log("Signed URL generated successfully:", data.signedUrl);
 
         return {
           ...session,
