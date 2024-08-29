@@ -28,7 +28,7 @@ export const sessionRouter = createTRPCRouter({
         console.log("Generating signed URL for:", session.audioFilePath);
         // Generate a new signed URL for the audio file
         const { data, error } = await ctx.supabase.storage
-          .from('meditation_sessions')
+          .from('medidation_sessions')
           .createSignedUrl(session.audioFilePath, 3600); // URL valid for 1 hour
 
         if (error) {

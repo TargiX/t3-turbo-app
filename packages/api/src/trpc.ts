@@ -10,6 +10,12 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+// Add these at the top of your file, outside of any functions
+let cachedSupabaseClient: SupabaseClient | null = null;
+let lastAuthTime = 0;
+const AUTH_CACHE_DURATION = 3600000; // 1 hour in milliseconds
 
 import type { Session } from "@acme/auth";
 import { auth, validateToken } from "@acme/auth";
@@ -45,23 +51,48 @@ export const createTRPCContext = async (opts: {
 }) => {
   const authToken = opts.headers.get("Authorization") ?? null;
   const session = await isomorphicGetSession(opts.headers);
-
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
   console.log(">>> tRPC Request from", source, "by", session?.user);
 
-  const supabase = createClient(
+  let supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
- 
-  // If there's a session, create a custom JWT for Supabase
+
   if (session?.user) {
-    const payload = {
-      userId: session.user.id,
-      exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour from now
-    };
-    const supabaseToken = sign(payload, process.env.SUPABASE_JWT_SECRET!);
-    supabase.auth.setSession({ access_token: supabaseToken, refresh_token: '' });
+    const currentTime = Date.now();
+    if (!cachedSupabaseClient || (currentTime - lastAuthTime > AUTH_CACHE_DURATION)) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: process.env.STORAGE_EMAIL!,
+          password: process.env.STORAGE_PASSWORD!,
+        });
+
+        if (error) {
+          console.error('Error authenticating with Supabase:', error);
+        } else if (data?.session) {
+          cachedSupabaseClient = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+              global: {
+                headers: {
+                  Authorization: `Bearer ${data.session.access_token}`,
+                },
+              },
+            }
+          );
+          lastAuthTime = currentTime;
+          console.log('Supabase client authenticated for storage access');
+        }
+      } catch (error) {
+        console.error('Error during Supabase authentication:', error);
+      }
+    }
+    
+    if (cachedSupabaseClient) {
+      supabase = cachedSupabaseClient;
+    }
   }
 
   return {
