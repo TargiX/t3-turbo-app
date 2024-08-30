@@ -17,40 +17,33 @@ export const sessionRouter = createTRPCRouter({
   getById: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      console.log("Fetching session with ID:", input.id);
       const session = await ctx.db.query.MeditationSession.findFirst({
         where: (session, { eq }) => eq(session.id, input.id),
       });
 
-      console.log("Session found:", session);
-
-      if (session) {
-        console.log("Generating signed URL for:", session.audioFilePath);
-        // Generate a new signed URL for the audio file
-        const { data, error } = await ctx.supabase.storage
-          .from('medidation_sessions')
-          .createSignedUrl(session.audioFilePath, 3600); // URL valid for 1 hour
-
-        if (error) {
-          console.error("Error generating signed URL:", error);
-          throw new Error(`Failed to generate signed URL: ${error.message}`);
-        }
-
-        if (!data?.signedUrl) {
-          console.error("No signed URL generated");
-          throw new Error("Failed to generate signed URL");
-        }
-
-        console.log("Signed URL generated successfully:", data.signedUrl);
-
-        return {
-          ...session,
-          audioFilePath: data.signedUrl,
-        };
+      if (!session) {
+        return null;
       }
 
-      console.log("Session not found");
-      return null;
+      // Generate a new signed URL for the audio file
+      const { data, error } = await ctx.supabase.storage
+        .from('medidation_sessions')
+        .createSignedUrl(session.audioFilePath, 3600); // URL valid for 1 hour
+
+      if (error || !data?.signedUrl) {
+        throw new Error(`Failed to generate signed URL: ${error?.message || 'Unknown error'}`);
+      }
+
+      // Get file metadata
+      const { data: fileData } = await ctx.supabase.storage
+        .from('medidation_sessions')
+        .getPublicUrl(session.audioFilePath);
+
+      return {
+        ...session,
+        audioFilePath: data.signedUrl,
+        fileSize: fileData.publicUrl ? await getFileSize(fileData.publicUrl) : null,
+      };
     }),
 
   create: protectedProcedure
@@ -129,3 +122,15 @@ export const sessionRouter = createTRPCRouter({
       });
     }),
 });
+
+// Helper function to get file size
+async function getFileSize(url: string): Promise<number | null> {
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    const size = response.headers.get('Content-Length');
+    return size ? parseInt(size, 10) : null;
+  } catch (error) {
+    console.error('Error fetching file size:', error);
+    return null;
+  }
+}

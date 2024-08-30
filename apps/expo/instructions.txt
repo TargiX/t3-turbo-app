@@ -18,7 +18,6 @@ Main Navigation:
 
 Home
 Discover
-Create
 Profile
 More (Settings, Help, etc.)
 
@@ -39,8 +38,6 @@ Featured sessions
 New arrivals
 Search functionality
 
-
-Create Screen:
 
 Template selection
 Duration setting
