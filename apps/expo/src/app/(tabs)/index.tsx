@@ -11,23 +11,23 @@ export default function HomeScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.welcomeText}>Welcome, {user?.name || 'Meditator'}!</Text>
         
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Daily Recommendation</Text>
           <TouchableOpacity style={styles.card}>
             <Text style={styles.cardTitle}>Morning Mindfulness</Text>
             <Text style={styles.cardSubtitle}>10 min • Beginner</Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Continue Session</Text>
           <TouchableOpacity style={styles.card}>
-            <Text style={styles.cardTitle}>Stress Relief</Text>
+            <Text style={styles.cardTitle}>Main Course</Text>
             <Text style={styles.cardSubtitle}>15 min • 3/7 completed</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Timer</Text>
           <View style={styles.timerButtons}>
             <TouchableOpacity style={styles.timerButton}>
@@ -40,7 +40,7 @@ export default function HomeScreen() {
               <Text style={styles.timerButtonText}>15 min</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </View> */}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Stats</Text>

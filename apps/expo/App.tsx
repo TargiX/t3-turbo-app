@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
 import HomeScreen from './screens/HomeScreen';
-import DiscoverScreen from './screens/DiscoverScreen';
+import SessionsScreen from './screens/SessionsScreen';
 import CreateScreen from './screens/CreateScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import MoreScreen from './screens/MoreScreen';
@@ -21,7 +21,7 @@ export default function App() {
 
             if (route.name === 'Home') {
               iconName = focused ? 'home' : 'home-outline';
-            } else if (route.name === 'Discover') {
+            } else if (route.name === 'Sessions') {
               iconName = focused ? 'search' : 'search-outline';
             } else if (route.name === 'Create') {
               iconName = focused ? 'add-circle' : 'add-circle-outline';
@@ -36,7 +36,7 @@ export default function App() {
         })}
       >
         <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Discover" component={DiscoverScreen} />
+        <Tab.Screen name="Sessions" component={SessionsScreen} />
         <Tab.Screen name="Create" component={CreateScreen} />
         <Tab.Screen name="Profile" component={ProfileScreen} />
         <Tab.Screen name="More" component={MoreScreen} />

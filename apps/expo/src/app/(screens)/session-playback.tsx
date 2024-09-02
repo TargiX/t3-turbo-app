@@ -6,6 +6,7 @@ import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { Audio } from 'expo-av';
 import { api } from "~/utils/api";
 import Svg, { Circle } from 'react-native-svg';
+import SpinnerLoader from '~/components/SpinnerLoader';
 
 const BreathingGuide = ({ isPlaying }) => {
   const breathAnim = useRef(new Animated.Value(0)).current;
@@ -120,6 +121,7 @@ const BreathingGuide = ({ isPlaying }) => {
 export default function SessionPlaybackScreen() {
   const { id } = useLocalSearchParams();
   const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [playbackObject, setPlaybackObject] = useState<Audio.PlaybackStatus | null>(null);
   const [isAudioReady, setIsAudioReady] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const loadingAnimation = useRef(new Animated.Value(0)).current;
@@ -140,49 +142,44 @@ export default function SessionPlaybackScreen() {
       loadAudio(session.audioFilePath);
     }
     return () => {
-      if (sound) {
-        sound.unloadAsync();
-      }
+      cleanupAudio();
     };
   }, [session]);
 
   useEffect(() => {
     if (session?.audioFilePath && !isAudioReady) {
-      Animated.timing(loadingAnimation, {
-        toValue: 100,
-        duration: 60000,
-        useNativeDriver: true,
-      }).start();
-
-      const listener = loadingAnimation.addListener(({ value }) => {
-        setLoadingProgress(value);
-      });
-
-      return () => {
-        loadingAnimation.removeListener(listener);
-      };
+      startLoadingAnimation();
     }
   }, [session, isAudioReady]);
+
+  const startLoadingAnimation = () => {
+    loadingAnimation.setValue(0);
+    Animated.timing(loadingAnimation, {
+      toValue: 100,
+      duration: 15000, // 15 seconds
+      useNativeDriver: true,
+    }).start();
+
+    const listener = loadingAnimation.addListener(({ value }) => {
+      setLoadingProgress(value);
+    });
+
+    return () => {
+      loadingAnimation.removeListener(listener);
+    };
+  };
 
   async function loadAudio(audioFilePath: string) {
     try {
       console.log("Loading audio from:", audioFilePath);
       
+      await cleanupAudio(); // Ensure any existing audio is cleaned up
+      startLoadingAnimation(); // Start the loading animation
+
       const { sound: newSound } = await Audio.Sound.createAsync(
         { uri: audioFilePath },
         { shouldPlay: false },
-        (status) => {
-          console.log("Audio status:", status);
-          if (status.isLoaded) {
-            Animated.timing(loadingAnimation, {
-              toValue: 100,
-              duration: 500,
-              useNativeDriver: true,
-            }).start(() => {
-              setIsAudioReady(true);
-            });
-          }
-        }
+        onPlaybackStatusUpdate
       );
       
       console.log("Audio loaded successfully");
@@ -190,6 +187,35 @@ export default function SessionPlaybackScreen() {
     } catch (error) {
       console.error("Error loading audio:", error);
       setIsAudioReady(false);
+    }
+  }
+
+  const onPlaybackStatusUpdate = (status: Audio.PlaybackStatus) => {
+    console.log("Audio status:", status);
+    if (status.isLoaded) {
+      setPlaybackObject(status);
+      setIsAudioReady(true);
+      // Complete the loading animation quickly
+      Animated.timing(loadingAnimation, {
+        toValue: 100,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    }
+  };
+
+  async function cleanupAudio() {
+    if (sound) {
+      try {
+        await sound.stopAsync();
+        await sound.unloadAsync();
+      } catch (error) {
+        console.error("Error cleaning up audio:", error);
+      }
+      setSound(null);
+      setPlaybackObject(null);
+      setIsAudioReady(false);
+      setIsPlaying(false);
     }
   }
 
@@ -244,6 +270,10 @@ export default function SessionPlaybackScreen() {
         setIsPlaying(!isPlaying);
       } catch (error) {
         console.error("Error playing/pausing audio:", error);
+        await cleanupAudio(); // Attempt to clean up if an error occurs
+        if (session?.audioFilePath) {
+          loadAudio(session.audioFilePath); // Reload the audio
+        }
       }
     } else {
       console.log("Sound is not ready yet");
@@ -310,7 +340,11 @@ export default function SessionPlaybackScreen() {
   };
 
   if (isLoading) {
-    return <Text>Loading...</Text>;
+    return (
+      <View style={styles.loaderContainer}>
+        <SpinnerLoader size={100} color="#f472b6" />
+      </View>
+    );
   }
 
   return (
@@ -326,6 +360,11 @@ export default function SessionPlaybackScreen() {
               
               <View style={styles.playButtonContainer}>
                 <CircularProgress progress={loadingProgress} />
+                {!isAudioReady && (
+                  <View style={styles.loaderOverlay}>
+                    <SpinnerLoader size={80} color="#f472b6" />
+                  </View>
+                )}
                 <TouchableOpacity 
                   style={styles.playPauseButton} 
                   onPress={handlePlayPause}
@@ -338,8 +377,6 @@ export default function SessionPlaybackScreen() {
                   />
                 </TouchableOpacity>
               </View>
-
-              {!isAudioReady && <Text>Loading audio... {Math.round(loadingProgress)}%</Text>}
 
               <View style={styles.progressBarContainer}>
                 <View style={[styles.progressBar, { width: `${progress}%` }]} />
@@ -515,5 +552,16 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loaderOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
   },
 });

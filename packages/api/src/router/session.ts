@@ -121,6 +121,28 @@ export const sessionRouter = createTRPCRouter({
         limit: input.limit,
       });
     }),
+
+  getUserSessionsWithProgress: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    const sessions = await ctx.db.query.MeditationSession.findMany({
+      orderBy: desc(MeditationSession.createdAt),
+    });
+
+    const userProgress = await ctx.db.query.UserMeditationSession.findMany({
+      where: eq(UserMeditationSession.userId, userId),
+    });
+
+    const sessionsWithProgress = sessions.map(session => {
+      const progress = userProgress.find(up => up.sessionId === session.id);
+      return {
+        ...session,
+        progress: progress ? progress.progress : 0,
+      };
+    });
+
+    return sessionsWithProgress;
+  }),
 });
 
 // Helper function to get file size

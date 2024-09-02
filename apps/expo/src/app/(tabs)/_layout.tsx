@@ -16,8 +16,8 @@ export default function TabLayout() {
             case 'index':
               iconName = focused ? 'home' : 'home-outline';
               break;
-            case 'discover':
-              iconName = focused ? 'search' : 'search-outline';
+            case 'sessions':
+              iconName = focused ? 'list' : 'list-outline';
               break;
             case 'create':
               iconName = focused ? 'add-circle' : 'add-circle-outline';
@@ -43,7 +43,7 @@ export default function TabLayout() {
       })}
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="discover" options={{ title: 'Discover' }} />
+      <Tabs.Screen name="sessions" options={{ title: 'My Sessions' }} />
       <Tabs.Screen name="create" options={{ title: 'Create' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
       <Tabs.Screen name="more" options={{ title: 'More' }} />
